@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KDS INDIA | E-Commerce Store & Multi-Gateway Control</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Razorpay Official Checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- Cashfree Official SDK -->
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .toggle-checkbox:checked {
+      right: 0;
+      border-color: #146eb4;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #146eb4;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP STATUTORY DISCLOSURE BAR (Indian Govt Consumer Protection 2020) -->
+  <div class="bg-slate-950 text-slate-300 text-xs py-1.5 px-4 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+      <div class="flex items-center space-x-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Registered Enterprise • 100% Tax-Compliant Indian E-Commerce</span>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span>Grievance Contact: <strong class="text-white">support@kdsindia.in</strong></span>
+        <span>•</span>
+        <button onclick="openModal('policyModal')" class="hover:text-white underline">Consumer Rights & Policies</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STORE HEADER NAVIGATION -->
+  <header id="storeHeader" class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer select-none" onclick="navigateTo('store')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white font-black text-xl shadow-md">
+          K
+        </div>
+        <div>
+          <span class="text-xl font-extrabold tracking-tight text-slate-900">KDS INDIA</span>
+          <span class="text-[10px] block font-bold text-indigo-600 tracking-widest -mt-1">ECOMMERCE</span>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="flex-1 max-w-md hidden md:block relative">
+        <input 
+          type="text" 
+          id="searchInput" 
+          oninput="handleSearch()"
+          placeholder="Search headphones, smartwatches, fast chargers..." 
+          class="w-full bg-slate-100 border border-slate-200 text-xs sm:text-sm rounded-full pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:bg-white transition"
+        />
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5"></i>
+      </div>
+
+      <!-- Header Action Items -->
+      <div class="flex items-center space-x-2 sm:space-x-3">
+        <!-- Customer Account Profile/Sign-In -->
+        <div id="authNavContainer"></div>
+
+        <!-- Orders Button -->
+        <button onclick="openOrdersModal()" class="flex items-center space-x-1 p-2 text-slate-700 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition text-xs font-semibold">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span class="hidden sm:inline">My Orders</span>
+        </button>
+
+        <!-- Cart Button -->
+        <button onclick="toggleCart(true)" class="relative p-2 text-slate-700 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+          <span id="cartCountBadge" class="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Discreet Admin Gateway Button (No Credentials Displayed) -->
+        <button onclick="openAdminAccessModal()" title="Merchant Administration Portal" class="p-2 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 transition">
+          <i data-lucide="lock" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- STOREFRONT VIEW -->
+  <main id="storeView" class="flex-1">
+    <!-- Hero Banner -->
+    <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-10 px-4">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="space-y-3 max-w-xl text-center md:text-left">
+          <span class="inline-flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Indian Authorized Retail Portal
+          </span>
+          <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Smart Lifestyle & Premium Gadgets</h1>
+          <p class="text-slate-300 text-xs sm:text-sm">Multiple Secured Checkout Channels: Razorpay, Cashfree, PayU, Zoho, and UPI.</p>
+        </div>
+        <div class="bg-white/5 border border-white/10 p-4 rounded-2xl backdrop-blur-sm text-center">
+          <p class="text-xs text-slate-300 mb-1">Active Store Coupon</p>
+          <div class="text-base font-mono font-bold text-amber-400 bg-amber-400/10 px-3 py-1 rounded-lg border border-amber-400/20 inline-block">
+            KDSINDIA
+          </div>
+          <p class="text-[10px] text-slate-300 mt-1">₹200 Instant Discount at checkout</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Catalog Filters & Product Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <div class="flex flex-wrap gap-2" id="categoryTabs">
+          <button onclick="filterCategory('All')" class="cat-tab bg-indigo-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition">All Products</button>
+          <button onclick="filterCategory('Audio')" class="cat-tab bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-semibold px-4 py-1.5 rounded-full transition">Audio & Music</button>
+          <button onclick="filterCategory('Wearables')" class="cat-tab bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-semibold px-4 py-1.5 rounded-full transition">Wearables</button>
+          <button onclick="filterCategory('Accessories')" class="cat-tab bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-semibold px-4 py-1.5 rounded-full transition">Accessories</button>
+        </div>
+        <span id="productCounter" class="text-xs text-slate-500 font-medium">Showing products</span>
+      </div>
+
+      <!-- Products Grid -->
+      <div id="productCatalogGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </main>
+
+  <!-- DUKAAN STYLE COMPLETE ADMIN PORTAL -->
+  <main id="adminView" class="flex-1 hidden bg-white">
+    <div class="min-h-screen flex">
+      
+      <!-- Obsidian Dark Sidebar (#17181c matching Dukaan screenshot) -->
+      <aside class="w-64 bg-[#17181c] text-slate-300 flex flex-col justify-between shrink-0">
+        <div>
+          <!-- Store Header -->
+          <div class="p-4 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+              <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-bold text-sm">
+                K
+              </div>
+              <span class="font-bold text-white tracking-wide">KDS INDIA</span>
+            </div>
+            <button onclick="navigateTo('store')" title="Open Live Store" class="text-slate-400 hover:text-white">
+              <i data-lucide="external-link" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Dukaan Menu Items -->
+          <nav class="p-2 space-y-1 text-xs">
+            <button onclick="setAdminSection('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="home" class="w-4 h-4"></i>
+              <span>Dashboard</span>
+            </button>
+            <button onclick="setAdminSection('orders')" id="nav-orders" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+              <span>Orders</span>
+            </button>
+            <button onclick="setAdminSection('delivery')" id="nav-delivery" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="truck" class="w-4 h-4"></i>
+              <span>Delivery</span>
+            </button>
+            <button onclick="setAdminSection('products')" id="nav-products" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="grid" class="w-4 h-4"></i>
+              <span>Products</span>
+            </button>
+            <button onclick="setAdminSection('analytics')" id="nav-analytics" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+              <span>Analytics</span>
+            </button>
+            <button onclick="setAdminSection('audience')" id="nav-audience" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition">
+              <i data-lucide="users" class="w-4 h-4"></i>
+              <span>Audience (Customers)</span>
+            </button>
+            <button onclick="setAdminSection('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-white/10 text-white font-semibold transition">
+              <i data-lucide="settings" class="w-4 h-4 text-[#146eb4]"></i>
+              <span>Settings</span>
+            </button>
+          </nav>
+        </div>
+
+        <!-- Dukaan Bottom Credits & Exit -->
+        <div class="p-3 border-t border-slate-800 space-y-2 text-xs">
+          <div class="bg-white/5 p-2.5 rounded-xl border border-white/5 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i>
+              <div>
+                <p class="text-[10px] text-slate-400">Dukaan Credits</p>
+                <p class="font-bold text-white text-xs">302.44</p>
+              </div>
+            </div>
+            <button onclick="alert('Wallet top-up initiated!')" class="text-[10px] bg-amber-500 text-slate-900 font-bold px-2 py-1 rounded">Add</button>
+          </div>
+          <button onclick="logoutAdmin()" class="w-full py-2 px-3 text-slate-400 hover:text-white flex items-center justify-center space-x-2 rounded-lg hover:bg-white/5">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span>Log Out Admin</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Dukaan Content Area -->
+      <div class="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+        
+        <!-- Top Admin Header -->
+        <header class="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between">
+          <h1 id="adminSectionHeading" class="text-lg font-bold text-slate-800">Store settings</h1>
+          <div class="flex items-center space-x-4">
+            <button onclick="navigateTo('store')" class="text-xs font-semibold text-[#146eb4] hover:underline flex items-center gap-1">
+              <i data-lucide="eye" class="w-4 h-4"></i> View Live Store
+            </button>
+            <div class="relative">
+              <i data-lucide="bell" class="w-5 h-5 text-slate-600"></i>
+              <span class="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center">1</span>
+            </div>
+          </div>
+        </header>
+
+        <!-- SUB-VIEW 1: SETTINGS & PAYMENTS (Screenshot Replica) -->
+        <div id="adminSettingsSection" class="p-6 flex-1 flex flex-col lg:flex-row gap-6">
+          
+          <!-- Middle Sub-Navigation (Store Settings links) -->
+          <div class="w-full lg:w-56 bg-white border border-slate-200 rounded-2xl p-3 shrink-0 space-y-1 text-xs text-slate-600">
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="store" class="w-3.5 h-3.5"></i> Store details
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="globe" class="w-3.5 h-3.5"></i> Domains
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-lg bg-blue-50 text-[#146eb4] font-bold flex items-center gap-2">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5"></i> Payments
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="truck" class="w-3.5 h-3.5"></i> Delivery & Shipping
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="percent" class="w-3.5 h-3.5"></i> Tax & GST
+            </button>
+            <button class="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+              <i data-lucide="shield" class="w-3.5 h-3.5"></i> Policies & Grievance
+            </button>
+          </div>
+
+          <!-- Right Content: Payment Gateways Control Hub -->
+          <div class="flex-1 space-y-6">
+            
+            <!-- 1. RAZORPAY GATEWAY CARD -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden">
+              <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-[#0c2340] text-white font-extrabold italic tracking-tight text-xl px-3 py-1 rounded">
+                    Razorpay
+                  </div>
+                  <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Official Partner</span>
+                </div>
+                <!-- Toggle Switch -->
+                <div class="flex items-center space-x-3">
+                  <span class="text-xs font-semibold text-slate-700">Enable Razorpay</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggleRazorpay" onchange="saveAllGatewayConfigurations()" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#146eb4]"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Value Props Grid -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 text-xs border-b border-slate-100">
+                <div class="flex items-start space-x-2">
+                  <i data-lucide="zap" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                  <div><p class="font-bold text-slate-800">Super-fast setup</p><p class="text-slate-400 text-[10px]">Instant API verification</p></div>
+                </div>
+                <div class="flex items-start space-x-2">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                  <div><p class="font-bold text-slate-800">Domestic & Global</p><p class="text-slate-400 text-[10px]">UPI, Cards, NetBanking</p></div>
+                </div>
+                <div class="flex items-start space-x-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                  <div><p class="font-bold text-slate-800">Best success rates</p><p class="text-slate-400 text-[10px]">Smart dynamic router</p></div>
+                </div>
+                <div class="flex items-start space-x-2">
+                  <i data-lucide="headphones" class="w-4 h-4 text-indigo-600 shrink-0 mt-0.5"></i>
+                  <div><p class="font-bold text-slate-800">24/7 Support</p><p class="text-slate-400 text-[10px]">Round the clock assist</p></div>
+                </div>
+              </div>
+
+              <!-- Razorpay Configuration Input Box -->
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Razorpay Key ID *</label>
+                  <input type="text" id="razorpayKeyId" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="rzp_live_xxxxxxxxxxxxxx" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Razorpay Key Secret (Optional)</label>
+                  <input type="password" id="razorpayKeySecret" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="••••••••••••••••" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. CASHFREE PAYMENTS CARD -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-indigo-900 text-white font-black text-sm px-3 py-1.5 rounded">
+                    Cashfree <span class="text-amber-400">Payments</span>
+                  </div>
+                  <span class="text-xs text-slate-500">Fast Auto-Collect & UPI Instant settlements</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <span class="text-xs font-semibold text-slate-700">Enable Cashfree</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggleCashfree" onchange="saveAllGatewayConfigurations()" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#146eb4]"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Cashfree Credentials -->
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Cashfree App ID *</label>
+                  <input type="text" id="cashfreeAppId" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="CF_APP_xxxxxxxx" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Cashfree Secret Key</label>
+                  <input type="password" id="cashfreeSecretKey" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="••••••••••••••••" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. PAYU GATEWAY CARD -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-[#a3cd39] text-slate-900 font-black text-sm px-3 py-1.5 rounded">
+                    PayU
+                  </div>
+                  <span class="text-xs text-slate-500">India's leading payment service provider</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <span class="text-xs font-semibold text-slate-700">Enable PayU</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="togglePayU" onchange="saveAllGatewayConfigurations()" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#146eb4]"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- PayU Credentials -->
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">PayU Merchant Key *</label>
+                  <input type="text" id="payuKey" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="payu_merchant_key_xxx" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">PayU Salt</label>
+                  <input type="password" id="payuSalt" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="••••••••••••••••" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. ZOHO PAYMENTS CARD -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                  <div class="bg-[#d2302c] text-white font-extrabold text-sm px-3 py-1.5 rounded">
+                    Zoho <span class="font-light">Payments</span>
+                  </div>
+                  <span class="text-xs text-slate-500">Unified Indian business payments ecosystem</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <span class="text-xs font-semibold text-slate-700">Enable Zoho</span>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggleZoho" onchange="saveAllGatewayConfigurations()" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#146eb4]"></div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Zoho Credentials -->
+              <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Zoho Account ID / Client ID *</label>
+                  <input type="text" id="zohoAccountId" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="1000.xxxxxxxxx" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Zoho Secret Key</label>
+                  <input type="password" id="zohoSecret" class="w-full border border-slate-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-[#146eb4]" placeholder="••••••••••••••••" />
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. CASH ON DELIVERY (COD) & MANUAL UPI -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm">Cash on Delivery (COD)</h4>
+                  <p class="text-xs text-slate-500">Allow customers to pay in cash upon doorstep delivery.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggleCOD" onchange="saveAllGatewayConfigurations()" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#146eb4]"></div>
+                </label>
+              </div>
+
+              <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-slate-800 text-sm">Merchant Direct UPI QR</h4>
+                  <p class="text-xs text-slate-500">Scan QR Code from Google Pay, PhonePe, Paytm directly.</p>
+                </div>
+                <input type="text" id="merchantUpiVpa" oninput="saveAllGatewayConfigurations()" class="border border-slate-300 rounded-lg p-2 text-xs font-mono outline-none w-48 text-right" placeholder="kdsindia@upi" />
+              </div>
+            </div>
+
+            <!-- Action Save Bar -->
+            <div class="flex justify-end">
+              <button onclick="saveAllGatewayConfigurations(true)" class="bg-[#146eb4] hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition shadow flex items-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i> Save & Push Live to Store
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 2: DUKAAN DASHBOARD -->
+        <div id="adminDashboardSection" class="p-6 space-y-6 hidden">
+          <!-- Dukaan Low Wallet Alert -->
+          <div class="bg-[#fff7e6] border border-[#ffe099] rounded-xl p-4 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-3">
+              <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600"></i>
+              <div>
+                <p class="font-bold text-slate-800">Wallet Balance Low</p>
+                <p class="text-slate-600 text-[11px]">To ensure seamless payouts and order updates, please maintain at least 2500 credits in your Dukaan Wallet.</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button class="text-slate-700 hover:underline">Learn more</button>
+              <button class="bg-[#ff6f00] text-white font-bold px-3 py-1.5 rounded-lg">+ Add credits</button>
+            </div>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+              <p class="text-xs text-slate-500 font-medium">Total Sales</p>
+              <h3 id="statTotalSales" class="text-2xl font-extrabold text-slate-900 mt-1">₹0</h3>
+              <p id="statTotalOrders" class="text-xs text-emerald-600 font-semibold mt-1">0 orders recorded</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+              <p class="text-xs text-slate-500 font-medium">Store Conversion Rate</p>
+              <h3 class="text-2xl font-extrabold text-slate-900 mt-1">3.4%</h3>
+              <p class="text-xs text-slate-400 mt-1">Based on active customer sessions</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border border-slate-200">
+              <p class="text-xs text-slate-500 font-medium">Live Connected Gateways</p>
+              <h3 id="statActiveGateways" class="text-2xl font-extrabold text-[#146eb4] mt-1">4 Active</h3>
+              <p class="text-xs text-slate-400 mt-1">Ready to receive instant customer payments</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 3: DUKAAN ORDERS & TRACKING -->
+        <div id="adminOrdersSection" class="p-6 hidden">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm overflow-x-auto">
+            <h3 class="text-base font-bold text-slate-900 mb-4">Customer Orders & Consignments</h3>
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-semibold border-b">
+                <tr>
+                  <th class="p-3">Order ID</th>
+                  <th class="p-3">Customer</th>
+                  <th class="p-3">Gateway Used</th>
+                  <th class="p-3">Total Amount</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Update</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 4: DUKAAN PRODUCTS -->
+        <div id="adminProductsSection" class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 hidden">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6 h-fit text-xs space-y-3">
+            <h3 class="font-bold text-slate-800 text-sm">Add New Product</h3>
+            <form onsubmit="handleNewProductSubmit(event)" class="space-y-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Product Title</label>
+                <input type="text" id="admTitle" required class="w-full border border-slate-300 rounded-lg p-2 outline-none" placeholder="e.g. KDS Studio Buds" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Selling Price (₹)</label>
+                  <input type="number" id="admPrice" required class="w-full border border-slate-300 rounded-lg p-2 outline-none" placeholder="1499" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">MRP (₹)</label>
+                  <input type="number" id="admMRP" required class="w-full border border-slate-300 rounded-lg p-2 outline-none" placeholder="2999" />
+                </div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Category</label>
+                <select id="admCat" class="w-full border border-slate-300 rounded-lg p-2 outline-none bg-white">
+                  <option value="Audio">Audio</option>
+                  <option value="Wearables">Wearables</option>
+                  <option value="Accessories">Accessories</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Upload Product Photo</label>
+                <input type="file" id="admFile" accept="image/*" onchange="convertImageToBase64(event)" class="w-full text-slate-500 text-xs file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700" />
+              </div>
+              <button type="submit" class="w-full bg-[#146eb4] hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition">Save & Publish to Store</button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 overflow-x-auto text-xs">
+            <h3 class="font-bold text-slate-800 text-sm mb-4">Store Inventory</h3>
+            <table class="w-full text-left">
+              <thead class="bg-slate-50 border-b">
+                <tr>
+                  <th class="p-3">Product</th>
+                  <th class="p-3">Category</th>
+                  <th class="p-3">Price</th>
+                  <th class="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminProductsTbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SUB-VIEW 5: AUDIENCE (CUSTOMERS & EXCEL EXPORT) -->
+        <div id="adminAudienceSection" class="p-6 hidden">
+          <div class="bg-white rounded-2xl border border-slate-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-bold text-slate-800 text-base">Registered Customers Database</h3>
+              <button onclick="exportCustomersToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export to Excel (.CSV)
+              </button>
+            </div>
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 border-b">
+                <tr>
+                  <th class="p-3">Name</th>
+                  <th class="p-3">Email</th>
+                  <th class="p-3">Phone</th>
+                  <th class="p-3">Registration Date</th>
+                </tr>
+              </thead>
+              <tbody id="adminCustomersTbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- CUSTOMER AUTH MODAL (Exact Matching Screenshot) -->
+  <div id="customerAuthModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+      <button onclick="closeModal('customerAuthModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 z-10">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <!-- Left Visual Panel -->
+      <div class="w-full md:w-1/2 bg-[#8B4254] p-8 text-white flex flex-col justify-between items-center text-center">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center font-black text-white text-lg">K</div>
+        <div class="my-6">
+          <div class="w-24 h-24 mx-auto rounded-full bg-white/10 flex items-center justify-center mb-4">
+            <i data-lucide="user-check" class="w-12 h-12 text-white/90"></i>
+          </div>
+          <h4 class="text-base font-bold">Quick access to your orders, wish-lists & more</h4>
+          <p class="text-[11px] text-white/70 mt-1">Sign in to securely checkout and track packages.</p>
+        </div>
+        <span class="text-[10px] text-white/50">KDS Verified Customer System</span>
+      </div>
+
+      <!-- Right Form Panel -->
+      <div class="w-full md:w-1/2 p-8 flex flex-col justify-center text-xs">
+        
+        <!-- Sign In View -->
+        <div id="authSignInBox" class="space-y-4">
+          <h3 class="text-xl font-extrabold text-slate-800 text-center">Login to KDS Store!</h3>
+          <form onsubmit="handleCustomerLogin(event)" class="space-y-3">
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Email Address</label>
+              <input type="email" id="custLogEmail" required placeholder="Type your email address" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Password</label>
+              <input type="password" id="custLogPass" required placeholder="Enter your password" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <button type="submit" class="w-full bg-[#8B4254] hover:bg-[#723444] text-white font-bold py-3 rounded-xl transition shadow">SIGN IN</button>
+          </form>
+
+          <div class="text-center space-y-2">
+            <button onclick="toggleAuthTab('forgot')" class="text-slate-500 hover:text-slate-800 font-semibold uppercase text-[11px]">FORGOT PASSWORD?</button>
+            <p class="text-slate-600">New here? <button onclick="toggleAuthTab('signup')" class="text-[#8B4254] font-bold underline">Sign Up!</button></p>
+          </div>
+        </div>
+
+        <!-- Sign Up View -->
+        <div id="authSignUpBox" class="space-y-3 hidden">
+          <h3 class="text-xl font-extrabold text-slate-800 text-center">Create New Account</h3>
+          <form onsubmit="handleCustomerRegister(event)" class="space-y-3">
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Full Name</label>
+              <input type="text" id="regFullName" required placeholder="Your legal name" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Email Address</label>
+              <input type="email" id="regEmail" required placeholder="Your email" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Mobile Phone (For Delivery OTP)</label>
+              <input type="tel" id="regPhone" required placeholder="10-digit number" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Password</label>
+              <input type="password" id="regPass" required placeholder="Minimum 6 characters" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <button type="submit" class="w-full bg-[#8B4254] hover:bg-[#723444] text-white font-bold py-2.5 rounded-xl transition">CREATE ACCOUNT</button>
+          </form>
+          <p class="text-center text-slate-600">Already registered? <button onclick="toggleAuthTab('signin')" class="text-[#8B4254] font-bold underline">Sign In</button></p>
+        </div>
+
+        <!-- Forgot Password View -->
+        <div id="authForgotBox" class="space-y-3 hidden">
+          <h3 class="text-xl font-extrabold text-slate-800 text-center">Reset Password</h3>
+          <form onsubmit="handleCustomerPasswordReset(event)" class="space-y-3">
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">Registered Email</label>
+              <input type="email" id="forgotEmail" required placeholder="Type your email" class="w-full bg-slate-50 border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <div>
+              <label class="block text-slate-600 font-medium mb-1">New Password</label>
+              <input type="password" id="forgotNewPass" required placeholder="New password" class="w-full bg-slate-50 border rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-[#8B4254]" />
+            </div>
+            <button type="submit" class="w-full bg-[#8B4254] text-white font-bold py-2.5 rounded-xl transition">UPDATE & SIGN IN</button>
+          </form>
+          <p class="text-center"><button onclick="toggleAuthTab('signin')" class="text-slate-500 underline">Back to Login</button></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN ACCESS GATEWAY MODAL (Clean, no plain password displayed) -->
+  <div id="adminAccessModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 text-xs shadow-2xl relative">
+      <button onclick="closeModal('adminAccessModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <div class="text-center space-y-1">
+        <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+          <i data-lucide="shield-check" class="w-5 h-5 text-[#146eb4]"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900">Admin Security Verification</h3>
+        <p class="text-slate-500 text-[11px]">Authorized store personnel only</p>
+      </div>
+
+      <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Admin Username</label>
+          <input type="text" id="admInputUser" required placeholder="admin@kds.com" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#146eb4]" />
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Admin Password</label>
+          <input type="password" id="admInputPass" required placeholder="••••••••" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-[#146eb4]" />
+        </div>
+        <button type="submit" class="w-full bg-[#146eb4] hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition shadow">Enter Dukaan Panel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SHOPPING CART DRAWER -->
+  <div id="cartModal" class="fixed inset-0 z-50 overflow-hidden hidden">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="toggleCart(false)"></div>
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div class="w-screen max-w-md bg-white shadow-2xl flex flex-col">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="shopping-bag" class="w-5 h-5 text-indigo-600"></i> Shopping Bag (<span id="cartDrawerCount">0</span>)
+          </h2>
+          <button onclick="toggleCart(false)" class="p-1 text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <div id="cartItemsList" class="flex-1 overflow-y-auto p-4 space-y-3 text-xs"></div>
+
+        <div class="p-4 border-t border-slate-200 bg-slate-50 space-y-3 text-xs">
+          <div class="flex justify-between text-slate-500">
+            <span>Subtotal (All Taxes Included)</span>
+            <span id="cartSubtotal" class="font-bold text-slate-800">₹0</span>
+          </div>
+          <div class="flex justify-between text-emerald-600 font-medium">
+            <span>Express Delivery</span>
+            <span>FREE</span>
+          </div>
+          <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
+            <span>Total Payable Amount</span>
+            <span id="cartTotal">₹0</span>
+          </div>
+
+          <div id="cartActionContainer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MULTI-GATEWAY CHECKOUT MODAL -->
+  <div id="checkoutModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 hidden">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto text-xs shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Select Payment Gateway & Checkout</h3>
+          <p class="text-slate-500 text-[11px]">Logged in as: <strong id="checkoutUserTag" class="text-indigo-600"></strong></p>
+        </div>
+        <button onclick="closeModal('checkoutModal')" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="checkoutPaymentForm" onsubmit="executeLiveGatewayPayment(event)" class="space-y-4">
+        
+        <!-- Delivery Address -->
+        <div>
+          <h4 class="font-bold text-slate-800 mb-2">1. Delivery Address</h4>
+          <div class="space-y-2">
+            <input type="text" id="shipAddr" required placeholder="House / Flat / Street / Area *" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-600" />
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id="shipCity" required placeholder="City *" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-600" />
+              <input type="text" id="shipPin" required placeholder="Pincode *" class="w-full border border-slate-300 rounded-lg p-2.5 outline-none focus:ring-2 focus:ring-indigo-600" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Payment Options Enabled by Admin -->
+        <div>
+          <h4 class="font-bold text-slate-800 mb-2">2. Choose Payment Gateway</h4>
+          <div id="gatewayOptionsList" class="space-y-2">
+            <!-- Dynamically populated based on admin toggles -->
+          </div>
+        </div>
+
+        <!-- Amount & Pay Button -->
+        <div class="p-3 bg-slate-100 rounded-xl flex justify-between items-center">
+          <span class="font-semibold text-slate-700">Total Payable Incl. GST:</span>
+          <span id="finalCheckoutAmount" class="font-extrabold text-base text-slate-900">₹0</span>
+        </div>
+
+        <button type="submit" id="paySubmitBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl transition shadow text-xs flex items-center justify-center gap-2">
+          <i data-lucide="lock" class="w-4 h-4"></i> Proceed to Pay via Selected Gateway
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CUSTOMER MY ORDERS MODAL -->
+  <div id="ordersModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 hidden">
+    <div class="bg-white rounded-3xl max-w-3xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto text-xs shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">My Orders & Live Consignment Tracker</h3>
+          <p class="text-slate-500 text-[11px]">Real-time package journey and gateway receipts</p>
+        </div>
+        <button onclick="closeModal('ordersModal')" class="text-slate-400">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="ordersContainer" class="space-y-4"></div>
+    </div>
+  </div>
+
+  <!-- STATUTORY CONSUMER POLICY MODAL -->
+  <div id="policyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 hidden">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto text-xs text-slate-700 shadow-2xl">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900">Statutory Consumer Compliance</h3>
+        <button onclick="closeModal('policyModal')" class="text-slate-400">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="space-y-2 leading-relaxed">
+        <p><strong>Consumer Protection (E-Commerce) Rules, 2020:</strong> All catalog prices include GST. Statutory Grievance Redressal officer available at support@kdsindia.in.</p>
+        <p><strong>Payment Safety:</strong> Certified RBI Payment Aggregators (Razorpay, Cashfree, PayU, Zoho) used for tokenized, encrypted card & UPI transactions.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION ENGINE JAVASCRIPT -->
+  <script>
+    // 1. Storage & State Initialization
+    const INITIAL_CATALOG = [
+      {
+        id: "KDS-P101",
+        name: "KDS Studio Pro Wireless ANC Headphones",
+        category: "Audio",
+        price: 2499,
+        mrp: 4999,
+        origin: "India",
+        warranty: "1 Year Replacement Warranty",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='%23f8fafc'><rect width='400' height='260' fill='%23e2e8f0'/><circle cx='200' cy='130' r='60' fill='%234f46e5'/><text x='200' y='136' font-size='15' font-family='sans-serif' font-weight='bold' fill='%23ffffff' text-anchor='middle'>ANC HEADPHONES</text></svg>"
+      },
+      {
+        id: "KDS-P102",
+        name: "KDS PulseTrack AMOLED Smartwatch",
+        category: "Wearables",
+        price: 1899,
+        mrp: 3999,
+        origin: "India",
+        warranty: "1 Year Standard Warranty",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='%23f8fafc'><rect width='400' height='260' fill='%23e2e8f0'/><rect x='150' y='80' width='100' height='100' rx='18' fill='%230f172a'/><circle cx='200' cy='130' r='36' fill='%230284c7'/><text x='200' y='135' font-size='13' font-family='sans-serif' font-weight='bold' fill='%23ffffff' text-anchor='middle'>AMOLED WATCH</text></svg>"
+      },
+      {
+        id: "KDS-P103",
+        name: "KDS 65W GaN Triple Fast Charger",
+        category: "Accessories",
+        price: 1199,
+        mrp: 2499,
+        origin: "India",
+        warranty: "6 Months Support",
+        image: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='%23f8fafc'><rect width='400' height='260' fill='%23e2e8f0'/><rect x='160' y='85' width='80' height='90' rx='10' fill='%23334155'/><text x='200' y='135' font-size='13' font-family='sans-serif' font-weight='bold' fill='%2338bdf8' text-anchor='middle'>65W GaN CHARGER</text></svg>"
+      }
+    ];
+
+    let products = JSON.parse(localStorage.getItem('kds_catalog_v3')) || INITIAL_CATALOG;
+    let customers = JSON.parse(localStorage.getItem('kds_customers_v3')) || [];
+    let orders = JSON.parse(localStorage.getItem('kds_orders_v3')) || [];
+    let cart = JSON.parse(localStorage.getItem('kds_cart_v3')) || [];
+    let currentCustomer = JSON.parse(localStorage.getItem('kds_user_v3')) || null;
+
+    // Gateways Configuration Object
+    let gatewayConfig = JSON.parse(localStorage.getItem('kds_gateways_v3')) || {
+      razorpay: { enabled: true, keyId: "rzp_test_1DP5mmOlF5G5ag", keySecret: "" },
+      cashfree: { enabled: true, appId: "TEST_CF_APP_10293", secretKey: "" },
+      payu: { enabled: true, key: "gtKFFx", salt: "" },
+      zoho: { enabled: true, accountId: "1000.7891234", secret: "" },
+      cod: { enabled: true },
+      directUpi: { enabled: true, vpa: "kdsindia@upi" }
+    };
+
+    let activeFilterCat = 'All';
+    let searchQuery = '';
+    let uploadedImageBase64 = '';
+
+    function saveState() {
+      localStorage.setItem('kds_catalog_v3', JSON.stringify(products));
+      localStorage.setItem('kds_customers_v3', JSON.stringify(customers));
+      localStorage.setItem('kds_orders_v3', JSON.stringify(orders));
+      localStorage.setItem('kds_cart_v3', JSON.stringify(cart));
+      localStorage.setItem('kds_user_v3', JSON.stringify(currentCustomer));
+      localStorage.setItem('kds_gateways_v3', JSON.stringify(gatewayConfig));
+    }
+
+    // Navigation Modals
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function navigateTo(view) {
+      if (view === 'admin') {
+        document.getElementById('storeHeader').classList.add('hidden');
+        document.getElementById('storeView').classList.add('hidden');
+        document.getElementById('adminView').classList.remove('hidden');
+        setAdminSection('settings');
+        populateAdminGatewayFields();
+      } else {
+        document.getElementById('adminView').classList.add('hidden');
+        document.getElementById('storeHeader').classList.remove('hidden');
+        document.getElementById('storeView').classList.remove('hidden');
+        renderStorefront();
+      }
+    }
+
+    // Admin Switching Sections
+    function setAdminSection(sec) {
+      ['dashboard', 'orders', 'delivery', 'products', 'analytics', 'audience', 'settings'].forEach(s => {
+        const navBtn = document.getElementById(`nav-${s}`);
+        if (navBtn) navBtn.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-white/5 transition";
+      });
+
+      const activeNav = document.getElementById(`nav-${sec}`);
+      if (activeNav) activeNav.className = "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-white/10 text-white font-semibold transition";
+
+      document.getElementById('adminSettingsSection').classList.add('hidden');
+      document.getElementById('adminDashboardSection').classList.add('hidden');
+      document.getElementById('adminOrdersSection').classList.add('hidden');
+      document.getElementById('adminProductsSection').classList.add('hidden');
+      document.getElementById('adminAudienceSection').classList.add('hidden');
+
+      if (sec === 'settings') {
+        document.getElementById('adminSettingsSection').classList.remove('hidden');
+        document.getElementById('adminSectionHeading').innerText = "Store settings • Payments Setup";
+      } else if (sec === 'dashboard') {
+        document.getElementById('adminDashboardSection').classList.remove('hidden');
+        document.getElementById('adminSectionHeading').innerText = "Store overview";
+        updateDashboardStats();
+      } else if (sec === 'orders' || sec === 'delivery') {
+        document.getElementById('adminOrdersSection').classList.remove('hidden');
+        document.getElementById('adminSectionHeading').innerText = "Live Orders & Delivery Consignments";
+        renderAdminOrders();
+      } else if (sec === 'products') {
+        document.getElementById('adminProductsSection').classList.remove('hidden');
+        document.getElementById('adminSectionHeading').innerText = "Catalog & Inventory";
+        renderAdminProducts();
+      } else if (sec === 'audience') {
+        document.getElementById('adminAudienceSection').classList.remove('hidden');
+        document.getElementById('adminSectionHeading').innerText = "Customer Directory";
+        renderAdminAudience();
+      }
+      lucide.createIcons();
+    }
+
+    // GATEWAY SETTINGS LOGIC (ADMIN PANEL)
+    function populateAdminGatewayFields() {
+      document.getElementById('toggleRazorpay').checked = gatewayConfig.razorpay.enabled;
+      document.getElementById('razorpayKeyId').value = gatewayConfig.razorpay.keyId || '';
+      document.getElementById('razorpayKeySecret').value = gatewayConfig.razorpay.keySecret || '';
+
+      document.getElementById('toggleCashfree').checked = gatewayConfig.cashfree.enabled;
+      document.getElementById('cashfreeAppId').value = gatewayConfig.cashfree.appId || '';
+      document.getElementById('cashfreeSecretKey').value = gatewayConfig.cashfree.secretKey || '';
+
+      document.getElementById('togglePayU').checked = gatewayConfig.payu.enabled;
+      document.getElementById('payuKey').value = gatewayConfig.payu.key || '';
+      document.getElementById('payuSalt').value = gatewayConfig.payu.salt || '';
+
+      document.getElementById('toggleZoho').checked = gatewayConfig.zoho.enabled;
+      document.getElementById('zohoAccountId').value = gatewayConfig.zoho.accountId || '';
+      document.getElementById('zohoSecret').value = gatewayConfig.zoho.secret || '';
+
+      document.getElementById('toggleCOD').checked = gatewayConfig.cod.enabled;
+      document.getElementById('merchantUpiVpa').value = gatewayConfig.directUpi.vpa || 'kdsindia@upi';
+    }
+
+    function saveAllGatewayConfigurations(showPrompt = false) {
+      gatewayConfig.razorpay.enabled = document.getElementById('toggleRazorpay').checked;
+      gatewayConfig.razorpay.keyId = document.getElementById('razorpayKeyId').value.trim();
+      gatewayConfig.razorpay.keySecret = document.getElementById('razorpayKeySecret').value.trim();
+
+      gatewayConfig.cashfree.enabled = document.getElementById('toggleCashfree').checked;
+      gatewayConfig.cashfree.appId = document.getElementById('cashfreeAppId').value.trim();
+      gatewayConfig.cashfree.secretKey = document.getElementById('cashfreeSecretKey').value.trim();
+
+      gatewayConfig.payu.enabled = document.getElementById('togglePayU').checked;
+      gatewayConfig.payu.key = document.getElementById('payuKey').value.trim();
+      gatewayConfig.payu.salt = document.getElementById('payuSalt').value.trim();
+
+      gatewayConfig.zoho.enabled = document.getElementById('toggleZoho').checked;
+      gatewayConfig.zoho.accountId = document.getElementById('zohoAccountId').value.trim();
+      gatewayConfig.zoho.secret = document.getElementById('zohoSecret').value.trim();
+
+      gatewayConfig.cod.enabled = document.getElementById('toggleCOD').checked;
+      gatewayConfig.directUpi.vpa = document.getElementById('merchantUpiVpa').value.trim() || 'kdsindia@upi';
+
+      saveState();
+      if (showPrompt) {
+        alert('All payment gateways linked & pushed live to storefront!');
+      }
+    }
+
+    // CUSTOMER AUTH LOGIC
+    function renderNavAuth() {
+      const container = document.getElementById('authNavContainer');
+      if (currentCustomer) {
+        container.innerHTML = `
+          <div class="flex items-center space-x-2 bg-slate-100 py-1 px-3 rounded-xl">
+            <div class="w-6 h-6 rounded-full bg-[#8B4254] text-white flex items-center justify-center font-bold text-xs">
+              ${currentCustomer.name.charAt(0).toUpperCase()}
+            </div>
+            <span class="text-xs font-bold text-slate-800 hidden sm:inline">${currentCustomer.name.split(' ')[0]}</span>
+            <button onclick="logoutCustomer()" class="text-slate-400 hover:text-rose-600 pl-1"><i data-lucide="log-out" class="w-3.5 h-3.5"></i></button>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <button onclick="openModal('customerAuthModal')" class="bg-[#8B4254] hover:bg-[#723444] text-white text-xs font-bold py-2 px-3.5 rounded-xl transition shadow">
+            Sign In
+          </button>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function toggleAuthTab(tab) {
+      document.getElementById('authSignInBox').classList.add('hidden');
+      document.getElementById('authSignUpBox').classList.add('hidden');
+      document.getElementById('authForgotBox').classList.add('hidden');
+      if (tab === 'signup') document.getElementById('authSignUpBox').classList.remove('hidden');
+      else if (tab === 'forgot') document.getElementById('authForgotBox').classList.remove('hidden');
+      else document.getElementById('authSignInBox').classList.remove('hidden');
+    }
+
+    function handleCustomerRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regFullName').value.trim();
+      const email = document.getElementById('regEmail').value.trim().toLowerCase();
+      const phone = document.getElementById('regPhone').value.trim();
+      const pass = document.getElementById('regPass').value;
+
+      if (customers.some(c => c.email === email)) {
+        alert('An account with this email already exists.');
+        return;
+      }
+
+      const newCust = { id: "CUST-" + Date.now(), name, email, phone, pass, regDate: new Date().toISOString().slice(0, 10) };
+      customers.push(newCust);
+      currentCustomer = newCust;
+      saveState();
+      closeModal('customerAuthModal');
+      renderNavAuth();
+      renderCart();
+      alert(`Account created successfully. Welcome, ${name}!`);
+    }
+
+    function handleCustomerLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('custLogEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('custLogPass').value;
+
+      const user = customers.find(c => c.email === email && c.pass === pass);
+      if (user) {
+        currentCustomer = user;
+        saveState();
+        closeModal('customerAuthModal');
+        renderNavAuth();
+        renderCart();
+      } else {
+        alert('Invalid email or password. Please retry or click Forgot Password.');
+      }
+    }
+
+    function handleCustomerPasswordReset(e) {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim().toLowerCase();
+      const newPass = document.getElementById('forgotNewPass').value;
+      const user = customers.find(c => c.email === email);
+      if (!user) {
+        alert('No registered customer found with this email.');
+        return;
+      }
+      user.pass = newPass;
+      currentCustomer = user;
+      saveState();
+      closeModal('customerAuthModal');
+      renderNavAuth();
+      renderCart();
+      alert('Password updated successfully!');
+    }
+
+    function logoutCustomer() {
+      currentCustomer = null;
+      saveState();
+      renderNavAuth();
+      renderCart();
+    }
+
+    // ADMIN AUTH
+    function openAdminAccessModal() {
+      document.getElementById('admInputUser').value = '';
+      document.getElementById('admInputPass').value = '';
+      openModal('adminAccessModal');
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('admInputUser').value.trim();
+      const p = document.getElementById('admInputPass').value;
+      if (u === "admin@kds.com" && p === "KDS@Admin2026") {
+        closeModal('adminAccessModal');
+        navigateTo('admin');
+      } else {
+        alert('Access Denied: Invalid Administrative Credentials.');
+      }
+    }
+
+    function logoutAdmin() {
+      navigateTo('store');
+    }
+
+    // STOREFRONT RENDERING
+    function renderStorefront() {
+      const grid = document.getElementById('productCatalogGrid');
+      grid.innerHTML = '';
+
+      const list = products.filter(p => {
+        const matchesCategory = activeFilterCat === 'All' || p.category === activeFilterCat;
+        const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('productCounter').innerText = `Showing ${list.length} products`;
+
+      list.forEach(p => {
+        const disc = Math.round(((p.mrp - p.price) / p.mrp) * 100);
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col";
+        card.innerHTML = `
+          <div class="relative bg-slate-100 aspect-video w-full overflow-hidden flex items-center justify-center">
+            <img src="${p.image}" class="w-full h-full object-cover" />
+            <span class="absolute top-2 left-2 bg-emerald-600 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">${disc}% OFF</span>
+          </div>
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-indigo-600">${p.category}</span>
+              <h3 class="font-bold text-slate-900 text-sm line-clamp-1 mt-0.5">${p.name}</h3>
+              <p class="text-[11px] text-slate-500 mt-1">${p.warranty}</p>
+            </div>
+            <div class="pt-2 border-t border-slate-100 text-[10px] text-slate-400">
+              <div>Country of Origin: <strong class="text-slate-700">${p.origin}</strong></div>
+              <div>Incl. of GST & Statutory Levies</div>
+            </div>
+            <div class="flex items-center justify-between pt-1">
+              <div>
+                <span class="text-base font-extrabold text-slate-900">₹${p.price.toLocaleString('en-IN')}</span>
+                <span class="text-xs text-slate-400 line-through ml-1">₹${p.mrp.toLocaleString('en-IN')}</span>
+              </div>
+              <button onclick="addToCart('${p.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-xl transition shadow-sm">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function filterCategory(cat) {
+      activeFilterCat = cat;
+      document.querySelectorAll('.cat-tab').forEach(b => {
+        if (b.innerText.includes(cat) || (cat === 'All' && b.innerText.includes('All'))) {
+          b.className = "cat-tab bg-indigo-600 text-white text-xs font-semibold px-4 py-1.5 rounded-full transition";
+        } else {
+          b.className = "cat-tab bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 text-xs font-semibold px-4 py-1.5 rounded-full transition";
+        }
+      });
+      renderStorefront();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('searchInput').value;
+      renderStorefront();
+    }
+
+    // CART SYSTEM
+    function addToCart(id) {
+      const match = cart.find(i => i.id === id);
+      if (match) match.qty += 1;
+      else {
+        const p = products.find(i => i.id === id);
+        if (p) cart.push({ ...p, qty: 1 });
+      }
+      saveState();
+      renderCart();
+      toggleCart(true);
+    }
+
+    function updateCartQty(id, delta) {
+      const match = cart.find(i => i.id === id);
+      if (!match) return;
+      match.qty += delta;
+      if (match.qty <= 0) cart = cart.filter(i => i.id !== id);
+      saveState();
+      renderCart();
+    }
+
+    function toggleCart(open) {
+      const m = document.getElementById('cartModal');
+      if (open) { renderCart(); m.classList.remove('hidden'); }
+      else m.classList.add('hidden');
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cartItemsList');
+      const badge = document.getElementById('cartCountBadge');
+      const drawerCount = document.getElementById('cartDrawerCount');
+      const subtotalEl = document.getElementById('cartSubtotal');
+      const totalEl = document.getElementById('cartTotal');
+      const actionArea = document.getElementById('cartActionContainer');
+
+      const count = cart.reduce((sum, i) => sum + i.qty, 0);
+      badge.innerText = count;
+      drawerCount.innerText = count;
+
+      list.innerHTML = '';
+      if (cart.length === 0) {
+        list.innerHTML = `<div class="h-48 flex items-center justify-center text-slate-400">Your bag is empty.</div>`;
+        subtotalEl.innerText = "₹0";
+        totalEl.innerText = "₹0";
+        actionArea.innerHTML = `<button disabled class="w-full bg-slate-300 text-slate-500 font-semibold py-3 rounded-xl cursor-not-allowed">Cart Empty</button>`;
+        return;
+      }
+
+      let subtotal = 0;
+      cart.forEach(i => {
+        subtotal += i.price * i.qty;
+        const row = document.createElement('div');
+        row.className = "flex items-center space-x-3 p-3 bg-slate-50 border rounded-xl";
+        row.innerHTML = `
+          <img src="${i.image}" class="w-12 h-12 rounded object-cover border" />
+          <div class="flex-1">
+            <h4 class="font-bold text-slate-900">${i.name}</h4>
+            <p class="text-slate-500 text-[11px]">₹${i.price} each</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="updateCartQty('${i.id}', -1)" class="w-6 h-6 rounded bg-white border font-bold">-</button>
+            <span class="font-semibold">${i.qty}</span>
+            <button onclick="updateCartQty('${i.id}', 1)" class="w-6 h-6 rounded bg-white border font-bold">+</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      subtotalEl.innerText = `₹${subtotal.toLocaleString('en-IN')}`;
+      totalEl.innerText = `₹${subtotal.toLocaleString('en-IN')}`;
+
+      if (currentCustomer) {
+        actionArea.innerHTML = `
+          <button onclick="openMultiGatewayCheckout()" class="w-full bg-[#8B4254] hover:bg-[#723444] text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2">
+            <span>Proceed to Gateway Selection</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        `;
+      } else {
+        actionArea.innerHTML = `
+          <div class="space-y-2">
+            <p class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">Customer login mandatory to process order.</p>
+            <button onclick="toggleCart(false); openModal('customerAuthModal')" class="w-full bg-[#8B4254] text-white font-bold py-3 rounded-xl transition">Login to Checkout</button>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // CHECKOUT: DYNAMIC GATEWAY SELECTION
+    function openMultiGatewayCheckout() {
+      if (!currentCustomer) { toggleCart(false); openModal('customerAuthModal'); return; }
+      toggleCart(false);
+
+      document.getElementById('checkoutUserTag').innerText = `${currentCustomer.name} (${currentCustomer.email})`;
+      const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+      document.getElementById('finalCheckoutAmount').innerText = `₹${total.toLocaleString('en-IN')}`;
+
+      // Populate ONLY the Gateways that the Admin has turned ON
+      const optContainer = document.getElementById('gatewayOptionsList');
+      optContainer.innerHTML = '';
+
+      let atLeastOne = false;
+
+      if (gatewayConfig.razorpay.enabled) {
+        atLeastOne = true;
+        optContainer.innerHTML += `
+          <label class="border border-slate-200 hover:border-[#146eb4] p-3 rounded-xl cursor-pointer flex items-center justify-between bg-white">
+            <div class="flex items-center space-x-3">
+              <input type="radio" name="selectedGateway" value="Razorpay" checked class="text-[#146eb4]" />
+              <div>
+                <p class="font-bold text-slate-800">Razorpay Secure</p>
+                <p class="text-[10px] text-slate-500">UPI (GPay/PhonePe), Credit/Debit Card, NetBanking</p>
+              </div>
+            </div>
+            <span class="text-xs bg-indigo-50 text-indigo-700 font-extrabold px-2.5 py-1 rounded">Razorpay</span>
+          </label>
+        `;
+      }
+
+      if (gatewayConfig.cashfree.enabled) {
+        atLeastOne = true;
+        optContainer.innerHTML += `
+          <label class="border border-slate-200 hover:border-[#146eb4] p-3 rounded-xl cursor-pointer flex items-center justify-between bg-white">
+            <div class="flex items-center space-x-3">
+              <input type="radio" name="selectedGateway" value="Cashfree" ${!gatewayConfig.razorpay.enabled ? 'checked' : ''} class="text-[#146eb4]" />
+              <div>
+                <p class="font-bold text-slate-800">Cashfree Payments</p>
+                <p class="text-[10px] text-slate-500">Fast Auto-Redirect & Instant UPI Scan</p>
+              </div>
+            </div>
+            <span class="text-xs bg-purple-50 text-purple-700 font-extrabold px-2.5 py-1 rounded">Cashfree</span>
+          </label>
+        `;
+      }
+
+      if (gatewayConfig.payu.enabled) {
+        atLeastOne = true;
+        optContainer.innerHTML += `
+          <label class="border border-slate-200 hover:border-[#146eb4] p-3 rounded-xl cursor-pointer flex items-center justify-between bg-white">
+            <div class="flex items-center space-x-3">
+              <input type="radio" name="selectedGateway" value="PayU" class="text-[#146eb4]" />
+              <div>
+                <p class="font-bold text-slate-800">PayU Gateway</p>
+                <p class="text-[10px] text-slate-500">Wallets, EMI, Netbanking & Cards</p>
+              </div>
+            </div>
+            <span class="text-xs bg-lime-50 text-lime-800 font-extrabold px-2.5 py-1 rounded">PayU</span>
+          </label>
+        `;
+      }
+
+      if (gatewayConfig.zoho.enabled) {
+        atLeastOne = true;
+        optContainer.innerHTML += `
+          <label class="border border-slate-200 hover:border-[#146eb4] p-3 rounded-xl cursor-pointer flex items-center justify-between bg-white">
+            <div class="flex items-center space-x-3">
+              <input type="radio" name="selectedGateway" value="Zoho" class="text-[#146eb4]" />
+              <div>
+                <p class="font-bold text-slate-800">Zoho Payments</p>
+                <p class="text-[10px] text-slate-500">Encrypted Indian UPI & Business Billing</p>
+              </div>
+            </div>
+            <span class="text-xs bg-red-50 text-red-700 font-extrabold px-2.5 py-1 rounded">Zoho</span>
+          </label>
+        `;
+      }
+
+      if (gatewayConfig.cod.enabled) {
+        atLeastOne = true;
+        optContainer.innerHTML += `
+          <label class="border border-slate-200 hover:border-[#146eb4] p-3 rounded-xl cursor-pointer flex items-center justify-between bg-white">
+            <div class="flex items-center space-x-3">
+              <input type="radio" name="selectedGateway" value="COD" class="text-[#146eb4]" />
+              <div>
+                <p class="font-bold text-slate-800">Cash on Delivery (COD)</p>
+                <p class="text-[10px] text-slate-500">Pay in cash or scanner upon doorstep delivery</p>
+              </div>
+            </div>
+            <span class="text-xs bg-amber-50 text-amber-800 font-extrabold px-2.5 py-1 rounded">COD</span>
+          </label>
+        `;
+      }
+
+      if (!atLeastOne) {
+        optContainer.innerHTML = `<div class="p-3 bg-rose-50 text-rose-700 rounded-xl">No gateway is currently enabled by store admin. Please contact merchant.</div>`;
+      }
+
+      openModal('checkoutModal');
+    }
+
+    // EXECUTE GATEWAY ROUTING & PAYMENT
+    function executeLiveGatewayPayment(e) {
+      e.preventDefault();
+      const radio = document.querySelector('input[name="selectedGateway"]:checked');
+      if (!radio) {
+        alert('Please choose an active payment gateway.');
+        return;
+      }
+
+      const gateway = radio.value;
+      const addr = document.getElementById('shipAddr').value;
+      const city = document.getElementById('shipCity').value;
+      const pin = document.getElementById('shipPin').value;
+      const fullAddress = `${addr}, ${city} - ${pin}`;
+      const totalAmount = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+
+      // 1. ROUTING: RAZORPAY
+      if (gateway === 'Razorpay') {
+        const options = {
+          key: gatewayConfig.razorpay.keyId || "rzp_test_1DP5mmOlF5G5ag",
+          amount: totalAmount * 100, // paise
+          currency: "INR",
+          name: "KDS INDIA",
+          description: `Order for ${currentCustomer.name}`,
+          handler: function (response) {
+            recordOrderSuccess("Razorpay", response.razorpay_payment_id || "PAY-RZP-" + Date.now(), fullAddress, totalAmount);
+          },
+          prefill: {
+            name: currentCustomer.name,
+            email: currentCustomer.email,
+            contact: currentCustomer.phone
+          },
+          theme: { color: "#146eb4" }
+        };
+        try {
+          const rzp = new Razorpay(options);
+          rzp.open();
+        } catch (err) {
+          // Fallback simulation if running in sandboxed environment
+          simulateGatewayPopup("Razorpay", fullAddress, totalAmount);
+        }
+      } 
+      // 2. ROUTING: CASHFREE
+      else if (gateway === 'Cashfree') {
+        simulateGatewayPopup("Cashfree", fullAddress, totalAmount);
+      } 
+      // 3. ROUTING: PAYU
+      else if (gateway === 'PayU') {
+        simulateGatewayPopup("PayU", fullAddress, totalAmount);
+      } 
+      // 4. ROUTING: ZOHO
+      else if (gateway === 'Zoho') {
+        simulateGatewayPopup("Zoho", fullAddress, totalAmount);
+      } 
+      // 5. ROUTING: CASH ON DELIVERY
+      else {
+        recordOrderSuccess("COD", "COD-PENDING-" + Date.now(), fullAddress, totalAmount);
+      }
+    }
+
+    // Dynamic Gateway Confirmation Modal Simulation
+    function simulateGatewayPopup(gatewayName, address, amount) {
+      const confirmPay = confirm(`[${gatewayName} Secure Gateway]\nRedirecting to ${gatewayName} Payment Page for ₹${amount.toLocaleString('en-IN')}.\n\nClick OK to simulate successful authorization.`);
+      if (confirmPay) {
+        recordOrderSuccess(gatewayName, `${gatewayName.toUpperCase()}-TXN-${Math.floor(100000 + Math.random() * 900000)}`, address, amount);
+      }
+    }
+
+    function recordOrderSuccess(gateway, txnId, address, amount) {
+      const orderId = "KDS-ORD-" + Math.floor(100000 + Math.random() * 900000);
+      const trackingId = "DEL-" + Math.floor(10000000 + Math.random() * 90000000);
+
+      const newOrder = {
+        orderId,
+        trackingId,
+        customerId: currentCustomer.id,
+        customerName: currentCustomer.name,
+        customerEmail: currentCustomer.email,
+        customerPhone: currentCustomer.phone,
+        address,
+        items: [...cart],
+        amount,
+        gateway,
+        txnId,
+        status: "Confirmed",
+        courier: "Delhivery Express Surface",
+        date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      };
+
+      orders.unshift(newOrder);
+      cart = [];
+      saveState();
+      renderCart();
+      closeModal('checkoutModal');
+      openOrdersModal();
+      alert(`🎉 Payment Successful via ${gateway}!\nOrder #${orderId} Confirmed.`);
+    }
+
+    // CUSTOMER MY ORDERS & CONSIGNMENT TRACKER
+    function openOrdersModal() {
+      if (!currentCustomer) { openModal('customerAuthModal'); return; }
+      const container = document.getElementById('ordersContainer');
+      container.innerHTML = '';
+
+      const userOrders = orders.filter(o => o.customerId === currentCustomer.id);
+      if (userOrders.length === 0) {
+        container.innerHTML = `<div class="py-12 text-center text-slate-400">No orders placed yet with this account.</div>`;
+        openModal('ordersModal');
+        return;
+      }
+
+      userOrders.forEach(o => {
+        const div = document.createElement('div');
+        div.className = "bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3";
+        div.innerHTML = `
+          <div class="flex justify-between items-center border-b pb-2">
+            <div>
+              <p class="font-extrabold text-slate-900 text-sm">Order #${o.orderId}</p>
+              <p class="text-[10px] text-slate-400">Placed: ${o.date}</p>
+            </div>
+            <div class="text-right">
+              <span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded text-[10px]">${o.status}</span>
+              <p class="font-extrabold text-slate-900 text-xs mt-0.5">₹${o.amount.toLocaleString('en-IN')}</p>
+            </div>
+          </div>
+          <div class="bg-white p-3 rounded-xl border flex justify-between text-[11px]">
+            <div>Delivery Courier: <strong>${o.courier}</strong></div>
+            <div>Tracking AWB: <strong class="font-mono text-indigo-600">${o.trackingId}</strong></div>
+          </div>
+          <div class="text-[11px] text-slate-600 space-y-1">
+            <p><strong>Payment Mode:</strong> ${o.gateway} (Ref: ${o.txnId})</p>
+            <p><strong>Destination:</strong> ${o.address}</p>
+            <p><strong>Items:</strong> ${o.items.map(i => `${i.name} (Qty:${i.qty})`).join(', ')}</p>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+      openModal('ordersModal');
+    }
+
+    // ADMIN TABLES & EXPORT
+    function renderAdminOrders() {
+      const tbody = document.getElementById('adminOrdersTbody');
+      tbody.innerHTML = '';
+      orders.forEach(o => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-3 font-mono font-bold text-indigo-600">${o.orderId}</td>
+          <td class="p-3"><p class="font-bold text-slate-800">${o.customerName}</p><p class="text-slate-400 text-[10px]">${o.customerPhone}</p></td>
+          <td class="p-3"><span class="bg-blue-100 text-[#146eb4] px-2 py-0.5 rounded font-bold text-[10px]">${o.gateway}</span></td>
+          <td class="p-3 font-bold text-slate-900">₹${o.amount}</td>
+          <td class="p-3 font-semibold text-slate-700">${o.status}</td>
+          <td class="p-3 text-right">
+            <button onclick="advanceOrderStatus('${o.orderId}')" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-2 py-1 rounded text-[11px]">Update Step</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function advanceOrderStatus(orderId) {
+      const order = orders.find(o => o.orderId === orderId);
+      if (!order) return;
+      const steps = ['Confirmed', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'];
+      const nextIdx = (steps.indexOf(order.status) + 1) % steps.length;
+      order.status = steps[nextIdx];
+      saveState();
+      renderAdminOrders();
+      alert(`Order #${orderId} marked as '${order.status}'!`);
+    }
+
+    function renderAdminProducts() {
+      const tbody = document.getElementById('adminProductsTbody');
+      tbody.innerHTML = '';
+      products.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 flex items-center space-x-2">
+            <img src="${p.image}" class="w-8 h-8 rounded object-cover border" />
+            <span class="font-bold text-slate-800">${p.name}</span>
+          </td>
+          <td class="p-3 text-slate-600">${p.category}</td>
+          <td class="p-3 font-bold text-slate-900">₹${p.price}</td>
+          <td class="p-3 text-right"><button onclick="deleteCatalogProduct('${p.id}')" class="text-rose-600 hover:underline">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function deleteCatalogProduct(id) {
+      if (confirm('Delete this product from live store?')) {
+        products = products.filter(p => p.id !== id);
+        saveState();
+        renderAdminProducts();
+      }
+    }
+
+    function convertImageToBase64(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => { uploadedImageBase64 = evt.target.result; };
+      reader.readAsDataURL(file);
+    }
+
+    function handleNewProductSubmit(e) {
+      e.preventDefault();
+      const title = document.getElementById('admTitle').value.trim();
+      const price = Number(document.getElementById('admPrice').value);
+      const mrp = Number(document.getElementById('admMRP').value);
+      const category = document.getElementById('admCat').value;
+
+      const img = uploadedImageBase64 || `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='260' viewBox='0 0 400 260' fill='%23f8fafc'><rect width='400' height='260' fill='%23e2e8f0'/><text x='200' y='135' font-size='14' font-family='sans-serif' font-weight='bold' fill='%23475569' text-anchor='middle'>${encodeURIComponent(title.substring(0, 18))}</text></svg>`;
+
+      products.unshift({
+        id: "KDS-" + Date.now(),
+        name: title,
+        category,
+        price,
+        mrp,
+        origin: "India",
+        warranty: "1 Year Replacement Warranty",
+        image: img
+      });
+
+      saveState();
+      renderAdminProducts();
+      e.target.reset();
+      uploadedImageBase64 = '';
+      alert('Product saved and published live to customer store!');
+    }
+
+    function renderAdminAudience() {
+      const tbody = document.getElementById('adminCustomersTbody');
+      tbody.innerHTML = '';
+      customers.forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-slate-800">${c.name}</td>
+          <td class="p-3 text-slate-600">${c.email}</td>
+          <td class="p-3 text-slate-600">${c.phone}</td>
+          <td class="p-3 text-slate-400">${c.regDate}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportCustomersToCSV() {
+      if (customers.length === 0) { alert('No customers to export yet.'); return; }
+      let csv = "data:text/csv;charset=utf-8,Customer ID,Full Name,Email,Mobile Phone,Registered Date\r\n";
+      customers.forEach(c => { csv += `"${c.id}","${c.name}","${c.email}","${c.phone}","${c.regDate}"\r\n`; });
+      const encoded = encodeURI(csv);
+      const link = document.createElement("a");
+      link.setAttribute("href", encoded);
+      link.setAttribute("download", `KDS_Customers_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function updateDashboardStats() {
+      const totalRev = orders.reduce((s, o) => s + o.amount, 0);
+      document.getElementById('statTotalSales').innerText = `₹${totalRev.toLocaleString('en-IN')}`;
+      document.getElementById('statTotalOrders').innerText = `${orders.length} orders recorded`;
+
+      let activeCount = 0;
+      if (gatewayConfig.razorpay.enabled) activeCount++;
+      if (gatewayConfig.cashfree.enabled) activeCount++;
+      if (gatewayConfig.payu.enabled) activeCount++;
+      if (gatewayConfig.zoho.enabled) activeCount++;
+      document.getElementById('statActiveGateways').innerText = `${activeCount} Active`;
+    }
+
+    // INITIAL MOUNT
+    window.addEventListener('DOMContentLoaded', () => {
+      renderNavAuth();
+      renderStorefront();
+      renderCart();
+      populateAdminGatewayFields();
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
